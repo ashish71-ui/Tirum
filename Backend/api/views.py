@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.decorators import api_view
+from rest_framework.reverse import reverse
 from django.contrib.auth import logout
 
 from .serializers import RegisterSerializer
@@ -33,3 +35,12 @@ class LogoutView(APIView):
         request.user.auth_token.delete()
         logout(request)
         return Response(status=200)
+
+
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'register': reverse('register', request=request, format=format),
+        'login': reverse('login', request=request, format=format),
+        'logout': reverse('logout', request=request, format=format),
+    })
