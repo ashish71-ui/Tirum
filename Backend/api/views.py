@@ -7,12 +7,10 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from django.contrib.auth import logout
-
 from .serializers import RegisterSerializer
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
-
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
@@ -21,21 +19,17 @@ class RegisterView(APIView):
             return Response({'token': token.key}, status=201)
         return Response(serializer.errors, status=400)
 
-
 class CustomLoginView(ObtainAuthToken):
     permission_classes = [AllowAny]
-
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         return Response({'token': response.data['token']})
-
 
 class LogoutView(APIView):
     def post(self, request):
         request.user.auth_token.delete()
         logout(request)
         return Response(status=200)
-
 
 @api_view(['GET'])
 def api_root(request, format=None):

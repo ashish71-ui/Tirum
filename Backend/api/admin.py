@@ -1,3 +1,15 @@
 from django.contrib import admin
+from .models import (
+    CustomUser, Group, ExpenseCategory, Transaction, SplitDetail,
+    KhataBookEntry, Notification, UtilityBillReminder, Wallet
+)
 
-# Register your models here.
+admin.site.register(CustomUser)
+admin.site.register(Group)
+admin.site.register(ExpenseCategory)
+admin.site.register(Transaction)
+admin.site.register(SplitDetail)
+admin.site.register(KhataBookEntry)
+admin.site.register(Notification)
+admin.site.register(UtilityBillReminder)
+admin.site.register(Wallet)
