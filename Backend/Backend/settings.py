@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-403z#e^&k*r)aqnu0z!rn9xyw^f2rvshn*%9k3k@776+rp%@2g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.1.7","tirum.aavashgyawali.com","127.0.0.1"]
+ALLOWED_HOSTS = ["192.168.1.102","tirum.aavashgyawali.com","127.0.0.1"]
 
 
 # Application definition
@@ -144,7 +144,7 @@ AUTH_USER_MODEL = 'api.CustomUser'
 CORS_ALLOWED_ORIGINS = [
     "l"
     "http://localhost:8000",              # local React dev server
-    "http://192.168.1.7:8000",            # your local IP
+    "http://192.168.1.102:8000",            # your local IP
     "http://tirum.aavashgyawali.com",    # your domain
 ]
 
@@ -154,5 +154,5 @@ CSRF_TRUSTED_ORIGINS = [
     "https://tirum.aavashgyawali.com",
      "http://tirum.aavashgyawali.com",
     "http://localhost:8000",
-    "http://192.168.1.7:8000",
+    "http://192.168.1.102:8000",
 ]
