@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-403z#e^&k*r)aqnu0z!rn9xyw^f2rvshn*%9k3k@776+rp%@2g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.1.7","tirum.aavashgyawali.com"]
+ALLOWED_HOSTS = ["192.168.1.7","tirum.aavashgyawali.com","127.0.0.1"]
 
 
 # Application definition
@@ -46,8 +46,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+        "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
-    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -139,3 +139,14 @@ REST_FRAMEWORK = {
 
 
 AUTH_USER_MODEL = 'api.CustomUser'
+
+# CORS: Allow only specific origins
+CORS_ALLOWED_ORIGINS = [
+    "l"
+    "http://localhost:8000",              # local React dev server
+    "http://192.168.1.7:8000",            # your local IP
+    "http://tirum.aavashgyawali.com",    # your domain
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
