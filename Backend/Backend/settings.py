@@ -150,3 +150,9 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://tirum.aavashgyawali.com",
+     "http://tirum.aavashgyawali.com",
+    "http://localhost:8000",
+    "http://192.168.1.7:8000",
+]
