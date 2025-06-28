@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-403z#e^&k*r)aqnu0z!rn9xyw^f2rvshn*%9k3k@776+rp%@2g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.1.102","tirum.aavashgyawali.com","127.0.0.1"]
+ALLOWED_HOSTS = ["192.168.1.102","tirum.aavashgyawali.com","127.0.0.1","localhost"]
 
 
 # Application definition
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "corsheaders",
     "api",
+    "User",
     "rest_framework",
     "rest_framework.authtoken",
 ]
@@ -138,21 +139,37 @@ REST_FRAMEWORK = {
 }
 
 
-AUTH_USER_MODEL = 'api.CustomUser'
+AUTH_USER_MODEL = 'User.CustomUser'
 
 # CORS: Allow only specific origins
 CORS_ALLOWED_ORIGINS = [
-    "l"
-    "http://localhost:8000",              # local React dev server
-    "http://192.168.1.102:8000",            # your local IP
-    "http://tirum.aavashgyawali.com",    # your domain
+    "http://localhost:8000",
+    "http://192.168.1.102:8000",
+    "http://tirum.aavashgyawali.com",
+    "http://localhost:5173", 
+    "http://127.0.0.1:5173",
 ]
 
+# Allow all headers and methods for development
+CORS_ALLOW_ALL_HEADERS = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# If you're using cookies or credentials:
 CORS_ALLOW_CREDENTIALS = True
+
+# Additional CORS settings for development
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 
 CSRF_TRUSTED_ORIGINS = [
     "https://tirum.aavashgyawali.com",
-     "http://tirum.aavashgyawali.com",
+    "http://tirum.aavashgyawali.com",
     "http://localhost:8000",
     "http://192.168.1.102:8000",
 ]

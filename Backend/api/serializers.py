@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import (
-    CustomUser, Group, ExpenseCategory, Transaction, SplitDetail,
+    ExpenseCategory, Transaction, SplitDetail,
     KhataBookEntry, Notification, UtilityBillReminder, Wallet
 )
+
+from User.models import (CustomUser, Group)
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,21 +17,23 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = CustomUser.objects.create_user(**validated_data)
         return user
 
-
-class RegisterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
-
 class CustomUserSerializer(serializers.ModelSerializer):
+    friends = serializers.PrimaryKeyRelatedField(many=True, queryset=CustomUser.objects.all(), required=False)
+    
     class Meta:
         model = CustomUser
-        fields = '__all__'
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'avatar', 'phone_number', 'language', 'friends']
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Add a 'name' field that combines first_name and last_name, or falls back to username
+        if instance.first_name and instance.last_name:
+            data['name'] = f"{instance.first_name} {instance.last_name}"
+        elif instance.first_name:
+            data['name'] = instance.first_name
+        else:
+            data['name'] = instance.username
+        return data
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:

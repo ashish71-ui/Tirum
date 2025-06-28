@@ -1,11 +1,9 @@
 from django.contrib import admin
 from .models import (
-    CustomUser, Group, ExpenseCategory, Transaction, SplitDetail,
+    ExpenseCategory, Transaction, SplitDetail,
     KhataBookEntry, Notification, UtilityBillReminder, Wallet
 )
 
-admin.site.register(CustomUser)
-admin.site.register(Group)
 admin.site.register(ExpenseCategory)
 admin.site.register(Transaction)
 admin.site.register(SplitDetail)
