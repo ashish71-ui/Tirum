@@ -13,12 +13,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install dependencies
-COPY requirements.txt /app/requirements.txt
+COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # Copy all project files into container
 COPY . .
 
-# Run Django development server
+# Collect static files
+RUN python manage.py collectstatic --noinput
+
+# Run Django server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
