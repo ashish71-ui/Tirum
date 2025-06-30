@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .  # Current directory is tirum_backend/
+    container_name: tirum-backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
