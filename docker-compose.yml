@@ -37,7 +37,7 @@ services:
       - backend
       - frontend
     volumes:
-      - ./Backend/static:/app/static  # <-- mount collected static files
+      - ./tirum_backend/static:/app/static  # <-- mount collected static files
     networks:
       - appnet
 
