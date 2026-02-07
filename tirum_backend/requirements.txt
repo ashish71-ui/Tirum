@@ -1,8 +1,24 @@
+# Django and core dependencies
 asgiref==3.8.1
 Django==5.2.2
 django-cors-headers==4.7.0
 djangorestframework==3.16.0
 pillow==11.2.1
 sqlparse==0.5.3
-# drf-sp
-drf-spectacular
+channels==4.2.0
+drf-spectacular==0.27.2
+
+# Production server and database
+gunicorn==23.0.0
+psycopg2-binary==2.9.9
+
+# Redis for channels
+channels-redis==4.2.0
+redis==5.2.0
+
+# Environment configuration
+python-dotenv==1.0.1
+
+# Security and monitoring
+django-csp==3.8
+whitenoise==6.7.0

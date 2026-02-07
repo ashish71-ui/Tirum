@@ -44,16 +44,53 @@ class ExpenseCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ExpenseCategory
         fields = '__all__'
-
-class TransactionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Transaction
-        fields = '__all__'
-
 class SplitDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = SplitDetail
         fields = '__all__'
+        
+class TransactionSerializer(serializers.ModelSerializer):
+    splits = SplitDetailSerializer(many=True, write_only=True)
+    category = serializers.PrimaryKeyRelatedField(queryset=ExpenseCategory.objects.all())
+    group = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), required=False, allow_null=True)
+    paid_by = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+
+    class Meta:
+        model = Transaction
+        fields = [
+            'id', 'title', 'amount', 'category', 'transaction_type',
+            'paid_by', 'group', 'receipt', 'note', 'mood', 'date', 'created_at', 'splits'
+        ]
+        read_only_fields = ['id', 'created_at', 'date']
+
+    def validate_title(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Title cannot be empty.")
+        return value
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Amount must be greater than 0.")
+        return value
+
+    def validate_splits(self, splits):
+        total_split = sum([float(s['amount']) for s in splits])
+        transaction_amount = float(self.initial_data.get('amount', 0))
+
+        if round(total_split, 2) != round(transaction_amount, 2):
+            raise serializers.ValidationError("Split amounts must total the transaction amount.")
+        return splits
+
+    def validate(self, data):
+        transaction_type = data.get('transaction_type')
+        group = data.get('group')
+
+        if transaction_type == 'group' and not group:
+            raise serializers.ValidationError("Group must be provided for group transactions.")
+        if transaction_type != 'group' and group:
+            raise serializers.ValidationError("Group should not be provided for personal or khata transactions.")
+        return data
+
 
 class KhataBookEntrySerializer(serializers.ModelSerializer):
     class Meta:
@@ -74,3 +111,8 @@ class WalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wallet
         fields = '__all__'
+
+class SplitDetailCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SplitDetail
+        fields = ['user', 'amount']

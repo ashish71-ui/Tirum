@@ -1,47 +1,49 @@
 version: "3.9"
 
 services:
-  backend:
-    build:
-      context: ./tirum_backend
-    container_name: tirum-backend
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - ./tirum_backend:/app
-    expose:
-      - "8000"
-    environment:
-      - DEBUG=1
-    networks:
-      - appnet
 
-  frontend:
-    build:
-      context: ./tirumfrontend
-      dockerfile: Dockerfile.dev
-    container_name: tirum-frontend
+  backend:
+    build: .
+    container_name: tirum-backend
+    command: gunicorn tirum_backend.wsgi:application --bind 0.0.0.0:8000 --workers 2
     volumes:
-      - ./tirumfrontend:/app
-      - /app/node_modules
-    expose:
-      - "3000"
-    networks:
-      - appnet
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    restart: always
+
+  db:
+    image: postgres:15-alpine
+    container_name: tirum-postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: tirum-redis
+    restart: always
 
   nginx:
-    build: ./nginx
+    image: nginx:latest
     container_name: tirum-nginx
     ports:
       - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     depends_on:
       - backend
-      - frontend
-    volumes:
-      - ./tirum_backend/static:/app/static  # <-- mount collected static files
-    networks:
-      - appnet
+    restart: always
 
-networks:
-  appnet:
-    driver: bridge
-
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
