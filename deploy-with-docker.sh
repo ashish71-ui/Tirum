@@ -19,10 +19,10 @@ print_error() { echo -e "${RED}✗${NC} $1"; }
 
 echo ""
 echo "Step 1: Checking Docker..."
-if command -v docker &> /dev/null; then
-    print_status "Docker installed: $(docker --version)"
+if command -v docker-compose &> /dev/null; then
+    print_status "Docker Compose installed: $(docker-compose --version)"
 else
-    print_error "Docker not found"
+    print_error "Docker Compose not found"
     exit 1
 fi
 
@@ -61,15 +61,15 @@ fi
 echo ""
 echo "Step 5: Stopping containers..."
 cd $PROJECT_DIR
-sudo docker compose down 2>/dev/null || true
+sudo docker-compose down 2>/dev/null || true
 print_status "Containers stopped"
 
 echo ""
 echo "Step 6: Building and starting containers..."
 print_warning "This may take a few minutes..."
 
-sudo docker compose build --no-cache
-sudo docker compose up -d
+sudo docker-compose build --no-cache
+sudo docker-compose up -d
 
 echo ""
 echo "Step 7: Waiting for services..."
@@ -81,7 +81,7 @@ MAX_RETRIES=30
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if sudo docker compose exec -T backend python manage.py migrate --noinput 2>/dev/null; then
+    if sudo docker-compose exec -T backend python manage.py migrate --noinput 2>/dev/null; then
         print_status "Migrations completed"
         break
     else
@@ -97,7 +97,7 @@ fi
 
 echo ""
 echo "Step 9: Creating admin user..."
-sudo docker compose exec -T backend python manage.py shell -c "
+sudo docker-compose exec -T backend python manage.py shell -c "
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(username='admin').exists():
@@ -109,7 +109,7 @@ else:
 
 echo ""
 echo "Step 10: Collecting static files..."
-sudo docker compose exec -T backend python manage.py collectstatic --noinput 2>/dev/null || true
+sudo docker-compose exec -T backend python manage.py collectstatic --noinput 2>/dev/null || true
 print_status "Static files ready"
 
 echo ""
@@ -118,7 +118,7 @@ sleep 5
 
 echo ""
 echo "Container Status:"
-sudo docker compose ps
+sudo docker-compose ps
 
 echo ""
 HEALTH_CHECK=$(curl -s http://localhost/health/ 2>/dev/null || echo '{"status":"unhealthy"}')
@@ -137,7 +137,7 @@ echo "   Admin:  http://$VM_IP/admin/"
 echo "   Health: http://$VM_IP/health/"
 echo ""
 echo "📝 Commands:"
-echo "   Logs:   sudo docker compose logs -f"
-echo "   Restart: sudo docker compose restart"
-echo "   Stop:   sudo docker compose down"
+echo "   Logs:   sudo docker-compose logs -f"
+echo "   Restart: sudo docker-compose restart"
+echo "   Stop:   sudo docker-compose down"
 echo "=========================================="
