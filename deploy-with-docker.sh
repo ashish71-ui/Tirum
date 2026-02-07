@@ -31,28 +31,36 @@ echo "Step 2: Starting Docker service..."
 sudo systemctl start docker 2>/dev/null || true
 print_status "Docker service running"
 
+# Check if we're in Tirum directory or tirum_backend
+if [ -f "docker-compose.yml" ]; then
+    PROJECT_DIR="$(pwd)"
+elif [ -f "../docker-compose.yml" ]; then
+    PROJECT_DIR="$(pwd)/.."
+else
+    PROJECT_DIR="$HOME/Tirum/tirum_backend"
+fi
+
 echo ""
 echo "Step 3: Setting up directories..."
-mkdir -p ~/tirum_backend/postgres_data
-mkdir -p ~/tirum_backend/redis_data
-mkdir -p ~/tirum_backend/staticfiles
-mkdir -p ~/tirum_backend/media
+mkdir -p $PROJECT_DIR/postgres_data
+mkdir -p $PROJECT_DIR/redis_data
+mkdir -p $PROJECT_DIR/staticfiles
+mkdir -p $PROJECT_DIR/media
 print_status "Directories ready"
 
 echo ""
-echo "Step 4: Configuring environment..."
-if [ ! -f ~/tirum_backend/.env ]; then
-    cp ~/tirum_backend/.env.example ~/tirum_backend/.env
-    print_warning "Created .env - please edit passwords!"
-    echo "Run: nano ~/tirum_backend/.env"
-    read -p "Press Enter after editing .env..."
+echo "Step 4: Checking environment..."
+if [ -f "$PROJECT_DIR/.env" ]; then
+    print_status ".env file found - using existing configuration"
 else
-    print_status "Using existing .env"
+    print_warning ".env not found - please create it!"
+    echo "Create $PROJECT_DIR/.env with your settings"
+    exit 1
 fi
 
 echo ""
 echo "Step 5: Stopping containers..."
-cd ~/tirum_backend
+cd $PROJECT_DIR
 sudo docker compose down 2>/dev/null || true
 print_status "Containers stopped"
 
