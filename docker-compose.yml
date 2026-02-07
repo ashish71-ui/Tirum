@@ -3,7 +3,7 @@ version: "3.9"
 services:
 
   backend:
-    build: ./Dockerfile.production
+    build: ./tirum_backend
     container_name: tirum-backend
     command: gunicorn tirum_backend.wsgi:application --bind 0.0.0.0:8000 --workers 2
     volumes:
