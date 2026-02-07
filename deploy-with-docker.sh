@@ -93,7 +93,7 @@ if [ ! -d "$PROJECT_DIR" ]; then
     echo ""
     echo "Run this on your LOCAL machine:"
     echo "  cd Tirum"
-    echo "  scp -r tirum_backend nginx docker-compose.production.yml deploy-with-docker.sh azureuser@YOUR_VM_IP:~/"
+    echo "  scp -r tirum_backend nginx docker-compose.yml deploy-with-docker.sh azureuser@YOUR_VM_IP:~/"
     exit 1
 fi
 
@@ -138,7 +138,7 @@ fi
 echo ""
 echo "Step 6: Stopping existing containers..."
 cd $PROJECT_DIR
-sudo docker compose -f docker-compose.production.yml down 2>/dev/null || true
+sudo docker compose -f docker-compose.yml down 2>/dev/null || true
 print_status "Existing containers stopped"
 
 # Step 7: Build and start containers
@@ -147,10 +147,10 @@ echo "Step 7: Building and starting containers..."
 print_warning "This may take a few minutes on first run..."
 
 # Build images
-sudo docker compose -f docker-compose.production.yml build --no-cache
+sudo docker compose -f docker-compose.yml build --no-cache
 
 # Start services
-sudo docker compose -f docker-compose.production.yml up -d
+sudo docker compose -f docker-compose.yml up -d
 
 # Step 8: Wait for services to be ready
 echo ""
@@ -164,7 +164,7 @@ MAX_RETRIES=30
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py migrate --noinput 2>/dev/null; then
+    if sudo docker compose -f docker-compose.yml exec -T backend python manage.py migrate --noinput 2>/dev/null; then
         print_status "Database migrations completed successfully"
         break
     else
@@ -176,7 +176,7 @@ done
 
 if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     print_warning "Database migration timed out. The database might still be starting up."
-    print_warning "Run 'docker compose -f docker-compose.production.yml exec backend python manage.py migrate' manually later."
+    print_warning "Run 'docker compose -f docker-compose.yml exec backend python manage.py migrate' manually later."
 fi
 
 # Step 10: Create superuser (optional)
@@ -185,7 +185,7 @@ echo "Step 10: Creating superuser..."
 echo "Creating admin user with default credentials..."
 echo "(Change the password after first login!)"
 
-sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py shell -c "
+sudo docker compose -f docker-compose.yml exec -T backend python manage.py shell -c "
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(username='admin').exists():
@@ -198,7 +198,7 @@ else:
 # Step 11: Collect static files
 echo ""
 echo "Step 11: Collecting static files..."
-sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py collectstatic --noinput 2>/dev/null || true
+sudo docker compose -f docker-compose.yml exec -T backend python manage.py collectstatic --noinput 2>/dev/null || true
 print_status "Static files collected"
 
 # Step 12: Verify deployment
@@ -209,7 +209,7 @@ sleep 5
 # Check container status
 echo ""
 echo "Container Status:"
-sudo docker compose -f docker-compose.production.yml ps
+sudo docker compose -f docker-compose.yml ps
 
 # Test health endpoint
 echo ""
@@ -233,10 +233,10 @@ echo "   - Admin:    http://$VM_IP/admin/"
 echo "   - Health:   http://$VM_IP/health/"
 echo ""
 echo "📝 Useful Commands:"
-echo "   View logs:    docker compose -f docker-compose.production.yml logs -f"
-echo "   Restart:      docker compose -f docker-compose.production.yml restart"
-echo "   Stop:         docker compose -f docker-compose.production.yml down"
-echo "   Update:       docker compose -f docker-compose.production.yml up -d --build"
+echo "   View logs:    docker compose -f docker-compose.yml logs -f"
+echo "   Restart:      docker compose -f docker-compose.yml restart"
+echo "   Stop:         docker compose -f docker-compose.yml down"
+echo "   Update:       docker compose -f docker-compose.yml up -d --build"
 echo ""
 echo "🔐 Security Recommendations:"
 echo "   1. Change admin password immediately!"
