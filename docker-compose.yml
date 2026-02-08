@@ -31,16 +31,18 @@ services:
     restart: always
 
   nginx:
-    image: nginx:latest
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     container_name: tirum-nginx
     ports:
       - "80:80"
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
     depends_on:
       - backend
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     restart: always
 
 volumes:
