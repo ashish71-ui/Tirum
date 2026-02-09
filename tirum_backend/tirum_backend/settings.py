@@ -31,7 +31,7 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 # Allowed hosts - configure for your domain
 # Add your server IP and domain here
 ALLOWED_HOSTS = os.environ.get(
-    'ALLOWED_HOSTS', 
+    'ALLOWED_HOSTS',  '192.168.18.20,'
     'localhost,127.0.0.1,192.168.0.103,192.168.0.102,20.244.5.93,tirum.aavashgyawali.com'
 ).split(',')
 
@@ -101,7 +101,7 @@ CHANNEL_LAYERS = {
 # Security settings for production
 if not DEBUG:
     # HTTPS settings
-    SECURE_SSL_REDIRECT = True
+    SECURE_SSL_REDIRECT = False  # Set to True if you have SSL configured in production
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
