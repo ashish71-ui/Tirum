@@ -152,7 +152,7 @@ else:
             'HOST': os.environ.get('POSTGRES_HOST', 'db'),
             'PORT': os.environ.get('POSTGRES_PORT', '5432'),
             'OPTIONS': {
-                'sslmode': os.environ.get('SSL_MODE', 'require'),
+               'sslmode': os.environ.get('SSL_MODE', 'disable'),
             },
         }
     }
