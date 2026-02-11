@@ -31,10 +31,9 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 # Allowed hosts - configure for your domain
 # Add your server IP and domain here
 ALLOWED_HOSTS = os.environ.get(
-    'ALLOWED_HOSTS',  '192.168.18.20,' ,'20.244.5.93',
-    'localhost,127.0.0.1,192.168.0.103,192.168.0.102,20.244.5.93,tirum.aavashgyawali.com'
-).split(',')
-
+    "ALLOWED_HOSTS",
+    "localhost,127.0.0.1,20.244.5.93,tirum.aavashgyawali.com"
+).split(",")
 
 # Application definition
 
