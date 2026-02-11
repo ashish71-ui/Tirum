@@ -227,12 +227,12 @@ if DEBUG:
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        'http://20.244.5.93',
+       
     ]
 else:
     CORS_ALLOWED_ORIGINS = os.environ.get(
         'CORS_ALLOWED_ORIGINS', 
-        'https://your-domain.com'
+        'http://20.244.5.93'
     ).split(',')
 
 # Allow all headers and methods for development
