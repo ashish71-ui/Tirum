@@ -101,8 +101,8 @@ CHANNEL_LAYERS = {
 if not DEBUG:
     # HTTPS settings
     SECURE_SSL_REDIRECT = False  # Set to True if you have SSL configured in production
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     
     # HSTS settings (enable for production)
