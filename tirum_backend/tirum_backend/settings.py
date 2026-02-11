@@ -257,7 +257,7 @@ if DEBUG:
 else:
     CSRF_TRUSTED_ORIGINS = os.environ.get(
         'CSRF_TRUSTED_ORIGINS',
-        'https://your-domain.com'
+         'http://20.244.5.93,https://tirum.aavashgyawali.com'
     ).split(',')
 
 # CORS exposed headers
