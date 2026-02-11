@@ -229,10 +229,10 @@ if DEBUG:
        
     ]
 else:
-    CORS_ALLOWED_ORIGINS = os.environ.get(
-        'CORS_ALLOWED_ORIGINS', 
-        'http://20.244.5.93'
-    ).split(',')
+    CORS_ALLOWED_ORIGINS = [
+        "http://20.244.5.93",
+        "http://tirum.aavashgyawali.com",
+    ]
 
 # Allow all headers and methods for development
 CORS_ALLOW_ALL_HEADERS = True
@@ -255,10 +255,11 @@ if DEBUG:
         "http://127.0.0.1:3000",
     ]
 else:
-    CSRF_TRUSTED_ORIGINS = os.environ.get(
-        'CSRF_TRUSTED_ORIGINS',
-         'http://20.244.5.93,https://tirum.aavashgyawali.com'
-    ).split(',')
+    CSRF_TRUSTED_ORIGINS = [
+        "http://20.244.5.93",
+        "http://tirum.aavashgyawali.com",
+    ]
+
 
 # CORS exposed headers
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
