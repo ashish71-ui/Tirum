@@ -25,6 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-403z#e^&k*r)aqnu0z!rn9xyw^f2rvshn*%9k3k@776+rp%@2g')
 # settings.py
 USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SECURITY WARNING: don't run with debug turned on in production!
 # Local development: True, Docker production: False
