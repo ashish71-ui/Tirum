@@ -36,8 +36,8 @@ services:
       dockerfile: Dockerfile
     container_name: tirum-nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - "8081:80"   
+      - "4433:443" 
     depends_on:
       - backend
     volumes:

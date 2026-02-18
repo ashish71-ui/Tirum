@@ -32,7 +32,7 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 # Add your server IP and domain here
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,20.244.5.93,tirum.aavashgyawali.com"
+    "localhost,127.0.0.1,20.244.5.93,tirum.ashishdkl.com.np"
 ).split(",")
 
 # Application definition
@@ -231,7 +231,7 @@ if DEBUG:
 else:
     CORS_ALLOWED_ORIGINS = [
         "http://20.244.5.93",
-        "http://tirum.aavashgyawali.com",
+        "http://tirum.ashishdkl.com.np",
     ]
 
 # Allow all headers and methods for development
@@ -257,7 +257,7 @@ if DEBUG:
 else:
     CSRF_TRUSTED_ORIGINS = [
         "http://20.244.5.93",
-        "http://tirum.aavashgyawali.com",
+        "http://tirum.ashishdkl.com.np",
     ]
 
 
