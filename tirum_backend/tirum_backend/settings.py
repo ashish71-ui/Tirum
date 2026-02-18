@@ -23,17 +23,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 # Load from environment variable for production
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-403z#e^&k*r)aqnu0z!rn9xyw^f2rvshn*%9k3k@776+rp%@2g')
-
+# settings.py
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SECURITY WARNING: don't run with debug turned on in production!
 # Local development: True, Docker production: False
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 # Allowed hosts - configure for your domain
 # Add your server IP and domain here
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,20.244.5.93,tirum.ashishdkl.com.np"
-).split(",")
+ALLOWED_HOSTS = ["tirum.ashishdkl.com.np", "20.244.5.93", "localhost", "127.0.0.1"]
 
 # Application definition
 
@@ -232,6 +231,7 @@ else:
     CORS_ALLOWED_ORIGINS = [
         "http://20.244.5.93",
         "http://tirum.ashishdkl.com.np",
+         "https://tirum.ashishdkl.com.np",
     ]
 
 # Allow all headers and methods for development
@@ -258,6 +258,7 @@ else:
     CSRF_TRUSTED_ORIGINS = [
         "http://20.244.5.93",
         "http://tirum.ashishdkl.com.np",
+        "https://tirum.ashishdkl.com.np",
     ]
 
 
