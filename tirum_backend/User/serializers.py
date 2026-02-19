@@ -5,13 +5,34 @@ from .models import (CustomUser, Group,FriendRequest)
 from decimal import Decimal
 
 class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    password_confirm = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True)
+    
     class Meta:
         model = CustomUser
-        fields = ['username', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ['username', 'password', 'password_confirm', 'first_name', 'last_name', 'email', 'phone_number']
+
+    def validate(self, data):
+        if data['password'] != data['password_confirm']:
+            raise serializers.ValidationError({"password": "Passwords do not match"})
+        return data
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(**validated_data)
+        # Remove password_confirm as it's not a model field
+        validated_data.pop('password_confirm', None)
+        
+        user = CustomUser.objects.create_user(
+            username=validated_data['username'],
+            password=validated_data['password'],
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+            email=validated_data.get('email', ''),
+            phone_number=validated_data.get('phone_number', ''),
+        )
         return user
 
 class CustomUserSerializer(serializers.ModelSerializer):
