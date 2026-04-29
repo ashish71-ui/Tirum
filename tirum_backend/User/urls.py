@@ -7,7 +7,7 @@ from .views import (
 
 router = DefaultRouter()
 router.register(r'users', CustomUserViewSet)
-router.register(r'groups', GroupViewSet)
+router.register(r'groups', GroupViewSet, basename='group')
 user_summary = UserSummaryViewSet.as_view({'get': 'get_user_summary'})
 
 urlpatterns = [

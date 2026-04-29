@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
 from money_manage.models import Transaction
 from .models import (CustomUser, Group,FriendRequest)
 from decimal import Decimal
@@ -37,14 +36,56 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class CustomUserSerializer(serializers.ModelSerializer):
     friends = serializers.PrimaryKeyRelatedField(many=True, queryset=CustomUser.objects.all(), required=False)
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
-        fields = '__all__'
+        fields = ['id', 'username', 'email', 'first_name', 'last_name',
+                  'phone_number', 'avatar', 'avatar_url', 'language', 'friends']
+        extra_kwargs = {
+            'avatar': {'required': False},
+            'friends': {'required': False},
+        }
+
+    def get_avatar_url(self, obj):
+        if not obj.avatar:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.avatar.url)
+        return obj.avatar.url
+
+class GroupMemberSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'first_name', 'last_name', 'name', 'email', 'avatar_url']
+    def get_name(self, obj):
+        return ' '.join(filter(None, [obj.first_name, obj.last_name])) or obj.username
+    def get_avatar_url(self, obj):
+        if not obj.avatar:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.avatar.url)
+        return obj.avatar.url
 
 class GroupSerializer(serializers.ModelSerializer):
+    members_detail = GroupMemberSerializer(source='members', many=True, read_only=True)
+    created_by = serializers.PrimaryKeyRelatedField(read_only=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    member_count = serializers.SerializerMethodField()
     class Meta:
         model = Group
-        fields = '__all__'
+        fields = ['id', 'name', 'type', 'description', 'created_by', 'created_by_username',
+                  'members', 'members_detail', 'member_count', 'created_at']
+        extra_kwargs = {
+            'members': {'required': False},
+            'description': {'required': False, 'allow_blank': True},
+        }
+    def get_member_count(self, obj):
+        return obj.members.count()
 
 class FriendRequestSerializer(serializers.ModelSerializer):
     class Meta:

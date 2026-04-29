@@ -225,9 +225,110 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     paid_at=split['paid_at']
                 )
 
-        # Return transaction data
         serializer = self.get_serializer(transaction)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'], url_path='create-group-expense')
+    def create_group_expense(self, request):
+        user = request.user
+        data = request.data
+        title = data.get('title')
+        amount = data.get('amount')
+        group_id = data.get('group_id')
+        split_type = data.get('split_type', 'equal')
+
+        if not title or not amount or not group_id:
+            return Response({'error': 'Title, amount, and group_id are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            amount = float(amount)
+            if amount <= 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid amount.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from User.models import Group
+        try:
+            group = Group.objects.get(pk=group_id)
+        except Group.DoesNotExist:
+            return Response({'error': 'Group not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not group.members.filter(id=user.id).exists():
+            return Response({'error': 'You are not a member of this group.'}, status=status.HTTP_403_FORBIDDEN)
+
+        members = list(group.members.all())
+        category = ExpenseCategory.objects.filter(name='General').first()
+        if not category:
+            category = ExpenseCategory.objects.create(name='General')
+
+        splits = []
+        if split_type == 'equal':
+            n = len(members)
+            base = round(amount / n, 2)
+            remainder = round(amount - base * n, 2)
+            for i, member in enumerate(members):
+                splits.append({
+                    'user': member,
+                    'amount': base + (remainder if i == 0 else 0),
+                    'is_paid': member.id == user.id,
+                    'paid_at': datetime.now() if member.id == user.id else None,
+                })
+
+        elif split_type == 'custom':
+            custom_splits = data.get('custom_splits', [])
+            member_map = {m.id: m for m in members}
+            assigned_ids = set()
+            total_split = 0.0
+            for cs in custom_splits:
+                uid = cs.get('user_id')
+                amt = cs.get('amount')
+                if not uid or amt is None:
+                    return Response({'error': 'Each custom split needs user_id and amount.'}, status=status.HTTP_400_BAD_REQUEST)
+                uid = int(uid)
+                if uid not in member_map:
+                    return Response({'error': f'User {uid} is not a group member.'}, status=status.HTTP_400_BAD_REQUEST)
+                splits.append({
+                    'user': member_map[uid],
+                    'amount': float(amt),
+                    'is_paid': uid == user.id,
+                    'paid_at': datetime.now() if uid == user.id else None,
+                })
+                total_split += float(amt)
+                assigned_ids.add(uid)
+            missing = set(member_map.keys()) - assigned_ids
+            if missing:
+                return Response({'error': 'All group members must have a split amount.'}, status=status.HTTP_400_BAD_REQUEST)
+            if round(total_split, 2) != round(amount, 2):
+                return Response({'error': f'Split total ({total_split:.2f}) must equal expense amount ({amount:.2f}).'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'Invalid split_type. Must be "equal" or "custom".'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with db_transaction.atomic():
+            transaction = Transaction.objects.create(
+                title=title, amount=amount, category=category,
+                transaction_type='group', paid_by=user, group=group,
+                note=data.get('note', ''),
+            )
+            for split in splits:
+                SplitDetail.objects.create(
+                    transaction=transaction, user=split['user'],
+                    amount=split['amount'], is_paid=split['is_paid'], paid_at=split['paid_at'],
+                )
+
+        return Response(self.get_serializer(transaction).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='close')
+    def close_transaction(self, request, pk=None):
+        transaction = self.get_object()
+        if transaction.paid_by != request.user:
+            return Response(
+                {'error': 'Only the payer can close this transaction.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        transaction.splits.filter(is_paid=False).update(
+            is_paid=True, paid_at=datetime.now()
+        )
+        return Response({'status': 'Transaction closed. All splits marked as settled.'})
 
 
 class SplitDetailViewSet(viewsets.ModelViewSet):

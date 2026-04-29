@@ -1,27 +1,16 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework import status, viewsets, generics, permissions
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, action
 from rest_framework.reverse import reverse
-from django.contrib.auth import logout
-from .serializers import RegisterSerializer, CustomUserSerializer, GroupSerializer
-from rest_framework import viewsets
-from .models import (CustomUser, Group)
-from django.db import models
-from .models import FriendRequest
-from .serializers import FriendRequestSerializer
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
-from rest_framework import generics, permissions, status
-from django.contrib.auth.models import User
-from django.contrib.auth import get_user_model
-from money_manage.models import KhataBookEntry, SplitDetail, Transaction
-from .serializers import UserSummarySerializer
+from django.contrib.auth import logout, get_user_model
 from django.db.models import Sum, Q
-from decimal import Decimal
+from .models import CustomUser, Group, FriendRequest
+from .serializers import RegisterSerializer, CustomUserSerializer, GroupSerializer, FriendRequestSerializer
+from money_manage.models import KhataBookEntry, SplitDetail, Transaction
 
 User = get_user_model()
 
@@ -110,6 +99,19 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         serializer = CustomUserSerializer(friends, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get', 'patch'], url_path='me')
+    def me(self, request):
+        if request.method == 'GET':
+            serializer = self.get_serializer(request.user, context={'request': request})
+            return Response(serializer.data)
+        serializer = self.get_serializer(
+            request.user, data=request.data, partial=True,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
     @action(detail=False, methods=['get'], url_path='search-users')
     def search_users(self, request):
         query = request.query_params.get('q', '')
@@ -181,30 +183,111 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         return Response({'status': f'{friend.username} removed from friends.'})
 
 class GroupViewSet(viewsets.ModelViewSet):
-    queryset = Group.objects.all()
     serializer_class = GroupSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Group.objects.filter(
+            Q(created_by=user) | Q(members=user)
+        ).distinct().order_by('-created_at')
 
     def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-        data['created_by'] = request.user.id
-        members = data.pop('members', [])
-        # Only allow friends as members
+        members = request.data.get('members', [])
         friend_ids = set(request.user.friends.values_list('id', flat=True))
         if members:
             invalid = [uid for uid in members if int(uid) not in friend_ids and int(uid) != request.user.id]
             if invalid:
                 return Response({'error': 'You can only add your friends as group members.'}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.get_serializer(data=data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        group = serializer.save()
-        # Add members if provided
-        if members:
-            group.members.set(members)
-        else:
-            group.members.add(request.user)
-        group.save()
-        out_serializer = self.get_serializer(group)
-        return Response(out_serializer.data, status=status.HTTP_201_CREATED)
+        group = serializer.save(created_by=request.user)
+        group.members.add(request.user)
+        for uid in members:
+            if int(uid) != request.user.id:
+                group.members.add(int(uid))
+        return Response(self.get_serializer(group).data, status=status.HTTP_201_CREATED)
+
+    def partial_update(self, request, *args, **kwargs):
+        group = self.get_object()
+        if group.created_by != request.user:
+            return Response({'error': 'Only the group creator can edit group details.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().partial_update(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        group = self.get_object()
+        if group.created_by != request.user:
+            return Response({'error': 'Only the group creator can edit group details.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'], url_path='add-member')
+    def add_member(self, request, pk=None):
+        group = self.get_object()
+        if group.created_by != request.user:
+            return Response({'error': 'Only the group creator can add members.'}, status=status.HTTP_403_FORBIDDEN)
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        friend_ids = set(request.user.friends.values_list('id', flat=True))
+        if int(user_id) not in friend_ids:
+            return Response({'error': 'You can only add your friends as members.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            new_member = CustomUser.objects.get(pk=user_id)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+        group.members.add(new_member)
+        return Response(self.get_serializer(group).data)
+
+    @action(detail=True, methods=['post'], url_path='remove-member')
+    def remove_member(self, request, pk=None):
+        group = self.get_object()
+        if group.created_by != request.user:
+            return Response({'error': 'Only the group creator can remove members.'}, status=status.HTTP_403_FORBIDDEN)
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if int(user_id) == request.user.id:
+            return Response({'error': 'You cannot remove yourself as creator.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            member = CustomUser.objects.get(pk=user_id)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+        group.members.remove(member)
+        return Response(self.get_serializer(group).data)
+
+    @action(detail=True, methods=['get'], url_path='expenses')
+    def group_expenses(self, request, pk=None):
+        group = self.get_object()
+        if not group.members.filter(id=request.user.id).exists():
+            return Response({'error': 'You are not a member of this group.'}, status=status.HTTP_403_FORBIDDEN)
+        from money_manage.models import Transaction
+        transactions = Transaction.objects.filter(group=group).prefetch_related(
+            'splits', 'splits__user'
+        ).select_related('paid_by').order_by('-created_at')
+        tx_data = []
+        for tx in transactions:
+            tx_dict = {
+                'id': tx.id,
+                'title': tx.title,
+                'amount': float(tx.amount),
+                'date': tx.date.isoformat() if tx.date else None,
+                'created_at': tx.created_at.isoformat(),
+                'note': tx.note or '',
+                'paid_by_username': tx.paid_by.username,
+                'paid_by_id': tx.paid_by.id,
+                'splits': [
+                    {
+                        'id': s.id,
+                        'user_id': s.user.id,
+                        'user_username': s.user.username,
+                        'amount': float(s.amount),
+                        'is_paid': s.is_paid,
+                    }
+                    for s in tx.splits.all()
+                ],
+            }
+            tx_data.append(tx_dict)
+        return Response({'expenses': tx_data})
 
 
 class SendFriendRequestView(generics.CreateAPIView):

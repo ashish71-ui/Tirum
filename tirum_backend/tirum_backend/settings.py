@@ -6,12 +6,13 @@ Production-ready configuration for Azure deployment.
 import os
 from pathlib import Path
 
-# Try to load dotenv (for Docker production), but don't fail if not installed (for local development)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # dotenv not installed locally - that's okay
+# Only load .env inside Docker (/.dockerenv exists). Local dev uses env vars or SQLite fallback.
+if os.path.exists('/.dockerenv'):
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,7 +34,7 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 # Allowed hosts - configure for your domain
 # Add your server IP and domain here
-ALLOWED_HOSTS = ["tirum.ashishdkl.com.np", "20.244.5.93", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["tirum.ashishdkl.com.np","192.168.0.102", "20.244.5.93", "localhost", "127.0.0.1", "192.168.1.74"]
 
 # Application definition
 
@@ -131,29 +132,31 @@ else:
     SECURE_BROWSER_XSS_FILTER = False
     X_FRAME_OPTIONS = 'SAMEORIGIN'
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-# Use PostgreSQL for production (Docker), SQLite for local development
-if DEBUG:
-    # Local development: Use SQLite
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    # Production: Use PostgreSQL
+# Use PostgreSQL only when POSTGRES_HOST is explicitly provided (Docker/production).
+# Fall back to SQLite for local development regardless of DEBUG setting.
+_POSTGRES_HOST = os.environ.get('POSTGRES_HOST', '')
+
+if _POSTGRES_HOST:
+    # Docker / production: use PostgreSQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('POSTGRES_DB', 'tirum_db'),
             'USER': os.environ.get('POSTGRES_USER', 'tirum_user'),
             'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'tirum_password'),
-            'HOST': os.environ.get('POSTGRES_HOST', 'db'),
+            'HOST': _POSTGRES_HOST,
             'PORT': os.environ.get('POSTGRES_PORT', '5432'),
             'OPTIONS': {
-               'sslmode': os.environ.get('SSL_MODE', 'disable'),
+                'sslmode': os.environ.get('SSL_MODE', 'disable'),
             },
+        }
+    }
+else:
+    # Local development: use SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 
@@ -193,6 +196,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
 # Default primary key field type
