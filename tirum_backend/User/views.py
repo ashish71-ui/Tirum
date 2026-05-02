@@ -194,18 +194,23 @@ class GroupViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         members = request.data.get('members', [])
+        # Enforce minimum: creator + at least 2 others = 3 total
+        unique_others = [uid for uid in members if int(uid) != request.user.id]
+        if len(unique_others) < 2:
+            return Response(
+                {'error': 'A group must have at least 3 members including yourself. Please select at least 2 friends.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         friend_ids = set(request.user.friends.values_list('id', flat=True))
-        if members:
-            invalid = [uid for uid in members if int(uid) not in friend_ids and int(uid) != request.user.id]
-            if invalid:
-                return Response({'error': 'You can only add your friends as group members.'}, status=status.HTTP_400_BAD_REQUEST)
+        invalid = [uid for uid in unique_others if int(uid) not in friend_ids]
+        if invalid:
+            return Response({'error': 'You can only add your friends as group members.'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         group = serializer.save(created_by=request.user)
         group.members.add(request.user)
-        for uid in members:
-            if int(uid) != request.user.id:
-                group.members.add(int(uid))
+        for uid in unique_others:
+            group.members.add(int(uid))
         return Response(self.get_serializer(group).data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
