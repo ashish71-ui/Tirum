@@ -379,7 +379,7 @@ class WalletViewSet(viewsets.ModelViewSet):
     queryset = Wallet.objects.all()
     serializer_class = WalletSerializer
 
-class UserSummaryViewSet(viewsets.ModelViewSet):
+class UserSummaryViewSet(viewsets.ViewSet):
     """
     Returns a summary for a user: total money to take, total money to return, with whom, and all transaction details.
     """

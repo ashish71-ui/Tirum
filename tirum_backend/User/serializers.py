@@ -76,14 +76,15 @@ class GroupSerializer(serializers.ModelSerializer):
     created_by = serializers.PrimaryKeyRelatedField(read_only=True)
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
     member_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Group
         fields = ['id', 'name', 'type', 'description', 'created_by', 'created_by_username',
-                  'members', 'members_detail', 'member_count', 'created_at']
+                  'members_detail', 'member_count', 'created_at']
         extra_kwargs = {
-            'members': {'required': False},
             'description': {'required': False, 'allow_blank': True},
         }
+
     def get_member_count(self, obj):
         return obj.members.count()
 
